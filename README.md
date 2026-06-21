@@ -1,40 +1,42 @@
 # Plunger
 
-Prompt injection guard plugin for opencode. Overrides `websearch` with deterministic sanitization: strips invisible unicode, markdown exfiltration channels, and known injection patterns. Domain trust tiers for whitelist/blacklist control.
+Prompt injection guard for opencode. Overrides `websearch` — strips invisible unicode, flags injection patterns, wraps untrusted content in `<untrusted>` tags. Domain trust tiers.
 
-## Usage
+## Install
 
-1. Symlink or copy to `~/.opencode/plugins/plunger.ts`
-2. (Optional) Configure trust tiers:
+```sh
+curl -fsSL https://raw.githubusercontent.com/anomalyco/plunger/main/install.sh | sh
+```
 
-**`~/.config/opencode/plunger-whitelist.json`**
+Or symlink from a local clone: `ln -sf $(pwd)/plunger.ts ~/.opencode/plugins/`
+
+## Config
+
+**`~/.config/opencode/plunger-whitelist.json`** — trusted domains, skip wrapper:
 ```json
 ["docs.mycompany.com", "confluence.internal"]
 ```
 
-**`~/.config/opencode/plunger-blacklist.json`**
+**`~/.config/opencode/plunger-blacklist.json`** — blocked domains + patterns:
 ```json
 {
-  "domains": ["known-malicious.example.com"],
-  "patterns": ["ignore all previous instructions", "developer mode"]
+  "domains": ["pastebin.com"],
+  "patterns": ["ignore all previous instructions"]
 }
 ```
 
-**Env vars:**
-- `PLUNGER_SEARCH_URL` — custom search endpoint override
+**Env:** `PLUNGER_SEARCH_URL` — custom search endpoint
 
 ## What it guards
 
-| Channel | Method | Deterministic? |
-|---------|--------|:---:|
-| Invisible Unicode (U+E0000–U+E007F) | Strip from fetched content | ✅ |
-| Markdown image exfiltration (`![...](url)`) | Strip from results | ✅ |
-| Reference-link URLs | Strip from results | ✅ |
-| Known injection patterns | Sub detection + wrapping | ✅ |
-| Untrusted content labeling | Wrap in `<untrusted>` tags | ✅ |
-| Whitelisted domains | Skip wrapper, still sanitize | ✅ |
-| Blacklisted domains | Drop results silently | ✅ |
+| Channel | Method |
+|---------|--------|
+| Invisible Unicode (U+E0000–U+E007F) | Strip from fetched content |
+| Known injection patterns | Regex detection + flagging |
+| Untrusted content | `<untrusted>` wrapper |
+| Whitelisted domains | Skip wrapper |
+| Blacklisted domains/blobs | Drop silently |
 
-## What it does NOT guard
+## What it doesn't
 
-Tool-based exfiltration (model being told to POST data) — requires architectural separation.
+Tool-based exfiltration (model POSTing data). That needs architectural separation.
