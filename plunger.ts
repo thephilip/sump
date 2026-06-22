@@ -1,5 +1,5 @@
 import { type Plugin, tool } from "@opencode-ai/plugin"
-import { readFileSync } from "fs"
+import { readFileSync, writeFileSync } from "fs"
 import { homedir } from "os"
 import { join } from "path"
 
@@ -33,6 +33,11 @@ function clean(text: string, domain: string): [string, boolean] {
   return [c, flagged]
 }
 
+function readJSON(path: string) {
+  try { return JSON.parse(readFileSync(path, "utf-8")) }
+  catch { return null }
+}
+
 export const Plunger: Plugin = async () => ({
   tool: {
     websearch: tool({
@@ -43,6 +48,63 @@ export const Plunger: Plugin = async () => ({
         if (!res.ok) return `Search failed (${res.status})`
         const [text, flagged] = clean(await res.text(), new URL(SEARCH).hostname)
         return flagged ? `${text}\n\n[FLAGGED: injection patterns detected]` : text
+      },
+    }),
+    "plunger-config": tool({
+      description: "View or modify Plunger whitelist (domains skipped from <untrusted> wrapper) and blacklist (blocked domains + injection patterns).",
+      args: {
+        action: tool.schema.enum(["show", "whitelist-add", "whitelist-remove", "blacklist-add", "blacklist-remove", "pattern-add", "pattern-remove"]),
+        value: tool.schema.string({ description: "Domain or pattern to add/remove" }).optional(),
+      },
+      async execute(args) {
+        const wl = join(CFG, "plunger-whitelist.json")
+        const bl = join(CFG, "plunger-blacklist.json")
+        const a = args.action as string
+
+        if (a === "show") {
+          const w = readJSON(wl) ?? []
+          const b = readJSON(bl) ?? { domains: [], patterns: [] }
+          return `WHITELIST:\n${JSON.stringify(w, null, 2)}\n\nBLACKLIST:\n${JSON.stringify(b, null, 2)}`
+        }
+
+        if (a === "whitelist-add") {
+          const w: string[] = readJSON(wl) ?? []
+          w.push(args.value as string)
+          writeFileSync(wl, JSON.stringify([...new Set(w)], null, 2))
+          return `Added "${args.value}" to whitelist`
+        }
+        if (a === "whitelist-remove") {
+          let w: string[] = readJSON(wl) ?? []
+          w = w.filter(d => d !== args.value)
+          writeFileSync(wl, JSON.stringify(w, null, 2))
+          return `Removed "${args.value}" from whitelist`
+        }
+
+        const b: { domains: string[], patterns: string[] } = readJSON(bl) ?? { domains: [], patterns: [] }
+        if (a === "blacklist-add") {
+          b.domains.push(args.value as string)
+          b.domains = [...new Set(b.domains)]
+          writeFileSync(bl, JSON.stringify(b, null, 2))
+          return `Added "${args.value}" to blacklist`
+        }
+        if (a === "blacklist-remove") {
+          b.domains = b.domains.filter(d => d !== args.value)
+          writeFileSync(bl, JSON.stringify(b, null, 2))
+          return `Removed "${args.value}" from blacklist`
+        }
+        if (a === "pattern-add") {
+          b.patterns.push(args.value as string)
+          b.patterns = [...new Set(b.patterns)]
+          writeFileSync(bl, JSON.stringify(b, null, 2))
+          return `Added pattern "${args.value}" to blacklist`
+        }
+        if (a === "pattern-remove") {
+          b.patterns = b.patterns.filter(p => p !== args.value)
+          writeFileSync(bl, JSON.stringify(b, null, 2))
+          return `Removed pattern "${args.value}" from blacklist`
+        }
+
+        return "Unknown action"
       },
     }),
   },

@@ -1,0 +1,39 @@
+{
+  "__comment": "Injection patterns adapted from Prompt Injection Firewall (github.com/ogulcanaydogan/Prompt-Injection-Firewall), Apache-2.0. Domains are common untrusted paste/redirect hosts.",
+  "domains": [
+    "pastebin.com",
+    "raw.githubusercontent.com",
+    "gist.githubusercontent.com",
+    "replit.com",
+    "glitch.com",
+    "bit.ly",
+    "tinyurl.com",
+    "shorturl.at",
+    "tiny.cc"
+  ],
+  "patterns": [
+    "ignore\\s+(all\\s+)?(previous|prior|above|earlier)\\s+(\\w+\\s+)?(instructions?|prompts?|rules?|guidelines?|directives?)",
+    "disregard\\s+(all\\s+)?(previous|prior|above|earlier)\\s+(instructions?|prompts?|rules?|guidelines?|directives?)",
+    "override\\s+(the\\s+)?(system|previous|safety)\\s+(prompt|instructions?|rules?|settings?)",
+    "forget\\s+(everything|all)\\s+(you|that)\\s+(were|was|have\\s+been)\\s+told",
+    "do\\s+not\\s+follow\\s+(the\\s+)?(previous|above|system)\\s+(instructions?|prompts?|rules?)",
+    "you\\s+are\\s+no\\s+longer\\s+(an?\\s+)?(AI|assistant|chatbot|language\\s+model|helpful)",
+    "(activate|assume|adopt|switch)\\s+(the\\s+)?persona\\s*[(:\\s]",
+    "(show|reveal|display|print|output|repeat|tell)\\s+(me\\s+)?(your|the)\\s+(system|initial|original|developer|hidden|secret)\\s+(prompt|instructions?|message|directives?|configuration)",
+    "(output|write|reproduce|reconstruct|translate|convert)\\s+(your|the)\\s+(full|complete|entire|whole)?\\s*(system|initial|original)\\s*(prompt|instructions?|message|configuration)",
+    "repeat\\s+(the\\s+)?(text|words?|instructions?|everything)\\s+(above|before|preceding|prior)",
+    "(<\\|?(system|user|assistant|im_start|im_end|endoftext)\\|?>)",
+    "</?(system\\w*|instruction\\w*|prompt|context|message|tool_call)>",
+    "(enable|activate|turn\\s+on)\\s+(unrestricted|unfiltered|uncensored|jailbreak|nsfw)\\s+mode",
+    "(you\\s+are|act\\s+as|pretend\\s+(to\\s+be|you.?re)|roleplay\\s+as|imagine\\s+you.?re)\\s+(now\\s+)?(a\\s+|an\\s+|the\\s+)?(evil|unrestricted|unfiltered|uncensored|jailbroken)",
+    "\\bDAN\\b.{0,50}\\b(do\\s+anything\\s+now|mode|enabled|activated)\\b",
+    "enter\\s+(developer|debug|god|admin|root|sudo|maintenance)\\s+mode",
+    "(content|safety|usage)\\s+(policy|policies|filter|guidelines?)\\s+(has|have)\\s+been\\s+(temporarily|permanently)?\\s*(suspended|disabled|lifted|removed|updated|changed|relaxed)",
+    "\\b(FreedomGPT|STAN|UnchainedGPT|MalwareGPT|TruthBot|OmniMind|ShadowGPT|ChaosGPT|EvilGPT|DevMode)\\b",
+    "(bypass|disable|remove|circumvent|turn\\s+off)\\s+(all\\s+)?(safety|content)\\s+(measures?|filters?|policies?|restrictions?|guidelines?|checks?)",
+    "(output|write|generate|print)\\s+(your|the)\\s+(full|complete|entire|whole)?\\s*(system|initial|original|internal)\\s*(prompt|instructions?|message|configuration|directives?)",
+    "I\\s+have\\s+been\\s+(PWNED|compromised|hacked|jailbroken)",
+    "<!--\\s*.{0,200}(instruction|override|inject|hidden|command|directive|ignore|disregard)",
+    "\\[\\s*(SYSTEM|ADMIN|MODERATOR|EDITOR|AUTOMATED|SECURITY)\\s*[.:\\]\\s]"
+  ]
+}
