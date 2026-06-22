@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"\nimport json, os, sys\nnorth_star = 'PROJECT_NORTH_STAR.md'\nif not os.path.exists(north_star):\n    sys.exit(0)\ncontent = open(north_star).read()\nmsg = 'MEMORY STEWARD ACTIVE\\\\n\\\\nThis project is managed by memory-steward. Before any other work, you must run the session-start alignment check:\\\\n1. You already have the North Star below injected into context - read it fully.\\\\n2. Check for roadmap/spec files and read them in full.\\\\n3. Present an alignment summary to the user and ask if anything has changed before starting work.\\\\n\\\\n--- PROJECT NORTH STAR ---\\\\n' + content\nprint(json.dumps({'hookSpecificOutput': {'hookEventName': 'SessionStart', 'additionalContext': msg}}))\n\"",
+            "statusMessage": "Loading project North Star..."
+          }
+        ]
+      }
+    ]
+  }
+}
