@@ -18,6 +18,8 @@ In the age of agentic AI, every search result is a potential attack vector. Sump
 
 ## Install
 
+### OpenCode plugin
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/anomalyco/sump/main/install.sh | sh
 ```
@@ -29,11 +31,26 @@ ln -sf $(pwd)/sump.ts ~/.opencode/plugins/
 ln -sf $(pwd)/commands/sump.md ~/.opencode/commands/
 ```
 
-Requires [OpenCode](https://opencode.ai) 0.x with plugin support.
+### Claude Code MCP server
+
+Add to `~/.claude/settings.json` or project `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "sump": {
+      "command": "npx",
+      "args": ["tsx", "/path/to/sump-mcp.ts"]
+    }
+  }
+}
+```
+
+Requires `tsx` (`npm install -g tsx`) or `tsc` to compile.
 
 ## How it works
 
-Sump is a single-file TypeScript plugin (111 lines) that hooks OpenCode's `websearch` tool. On every search:
+Sump is available as an [OpenCode](https://opencode.ai) plugin (`sump.ts`, 111 lines) or a [Claude Code](https://claude.ai) MCP server (`sump-mcp.ts`, 92 lines). Both share the same sanitization logic and config files. On every search:
 
 1. Fetches results from **DuckDuckGo Lite** (no API key needed; override via `SUMP_SEARCH_URL`)
 2. **Checks the source domain** against blacklist → drops if blocked
@@ -41,7 +58,7 @@ Sump is a single-file TypeScript plugin (111 lines) that hooks OpenCode's `webse
 4. **Scans for injection patterns** — if any match, the result is flagged
 5. **Wraps in `<untrusted>`** unless the domain is whitelisted
 
-The `/sump` command and `sump-config` tool let you manage trust rules at runtime without editing files.
+The `/sump` command and `sump-config` tool let you manage trust rules at runtime without editing files (OpenCode only).
 
 ## Configuration
 
@@ -78,24 +95,6 @@ Use natural language in OpenCode:
 - `block example.com`
 - `add "forget everything" to patterns`
 
-## Claude Code
-
-Add to your Claude Code MCP config (`~/.claude/settings.json` or project `.mcp.json`):
-
-```json
-{
-  "mcpServers": {
-    "sump": {
-      "command": "npx",
-      "args": ["tsx", "/path/to/sump-mcp.ts"]
-    }
-  }
-}
-```
-
-Requires `tsx` (`npm install -g tsx`) or pre-compile with `tsc`. Uses the same
-`~/.config/opencode/sump-{white,black}list.json` config files as the OpenCode plugin.
-
 ## Extending
 
 **Add patterns** — edit `~/.config/opencode/sump-blacklist.json` patterns array, or use the `pattern-add` action via `/sump`. Patterns are case-insensitive regexes.
@@ -106,9 +105,9 @@ Requires `tsx` (`npm install -g tsx`) or pre-compile with `tsc`. Uses the same
 
 ## Limits
 
-Sump guards `websearch` only. It does **not** protect against:
+Sump guards web search results only (OpenCode `websearch` / Claude Code `sump-search` tool). It does **not** protect against:
 - Tool-based exfiltration (the model POSTing data to an attacker's server)
-- Prompt injection via `webfetch` or file reads (separate override, not yet implemented)
+- Prompt injection via `webfetch` or file reads (separate override, not yet implemented for OpenCode)
 - Social engineering of the operator
 - Zero-day injection patterns not in the regex list
 
