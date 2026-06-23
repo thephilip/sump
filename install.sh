@@ -2,7 +2,7 @@
 # ponytail: single-file install, add multi-file/multi-platform support if needed
 set -e
 CFG="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
-REPO="${SUMP_REPO:-anomalyco/sump}"
+REPO="${SUMP_REPO:-thephilip/sump}"
 mkdir -p "${CFG}/plugins" "${CFG}/commands"
 curl -fsSL "https://raw.githubusercontent.com/$REPO/main/sump.ts" -o "${CFG}/plugins/sump.ts"
 curl -fsSL "https://raw.githubusercontent.com/$REPO/main/commands/sump.md" -o "${CFG}/commands/sump.md"
