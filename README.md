@@ -148,4 +148,4 @@ Sump guards web search results only (OpenCode `websearch` / MCP `sump-search` to
 
 ## Philosophy
 
-Sump is built small — no dependencies, no framework, no build step. Deliberate shortcuts are marked with `ponytail:` comments. The simplicity means you can read, audit, and trust the whole thing in five minutes.
+Sump is built small — no dependencies, no framework, no build step. The simplicity means you can read, audit, and trust the whole thing in five minutes.
