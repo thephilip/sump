@@ -73,7 +73,7 @@ function handle(msg: any) {
 
 async function search(id: any, query: string) {
   try {
-    const res = await fetch(`${SEARCH}?q=${encodeURIComponent(query)}`)
+    const res = await fetch(`${SEARCH}?q=${encodeURIComponent(query)}`, { headers: { "User-Agent": "sump-mcp/1.0" } })
     if (!res.ok) {
       respond(id, { content: [{ type: "text", text: `Search failed (${res.status})` }] })
       return

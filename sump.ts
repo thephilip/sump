@@ -4,23 +4,23 @@ import { homedir } from "os"
 import { join } from "path"
 
 const CFG = join(homedir(), ".config", "opencode")
-const SEARCH = process.env.PLUNGER_SEARCH_URL || "https://lite.duckduckgo.com/lite/"
+const SEARCH = process.env.SUMP_SEARCH_URL || "https://lite.duckduckgo.com/lite/"
 
 // ponytail: naive regex scan, upgrade to intent classifier if false positives hurt
 const BAD_RX = (() => {
   try {
-    const f = join(CFG, "plunger-blacklist.json")
+    const f = join(CFG, "sump-blacklist.json")
     return (JSON.parse(readFileSync(f, "utf-8")).patterns || []).map((p: string) => new RegExp(p, "i"))
   } catch { return [] }
 })()
 
 const WHITELIST: string[] = (() => {
-  try { return JSON.parse(readFileSync(join(CFG, "plunger-whitelist.json"), "utf-8")) }
+  try { return JSON.parse(readFileSync(join(CFG, "sump-whitelist.json"), "utf-8")) }
   catch { return [] }
 })()
 
 const BLACKLIST: string[] = (() => {
-  try { return JSON.parse(readFileSync(join(CFG, "plunger-blacklist.json"), "utf-8")).domains || [] }
+  try { return JSON.parse(readFileSync(join(CFG, "sump-blacklist.json"), "utf-8")).domains || [] }
   catch { return [] }
 })()
 
@@ -38,27 +38,27 @@ function readJSON(path: string) {
   catch { return null }
 }
 
-export const Plunger: Plugin = async () => ({
+export const Sump: Plugin = async () => ({
   tool: {
     websearch: tool({
       description: "Search the web. Results sanitized to prevent prompt injection.",
       args: { query: tool.schema.string({ description: "Search query" }) },
       async execute(args) {
-        const res = await fetch(`${SEARCH}?q=${encodeURIComponent(args.query as string)}`)
+        const res = await fetch(`${SEARCH}?q=${encodeURIComponent(args.query as string)}`, { headers: { "User-Agent": "sump/1.0" } })
         if (!res.ok) return `Search failed (${res.status})`
         const [text, flagged] = clean(await res.text(), new URL(SEARCH).hostname)
         return flagged ? `${text}\n\n[FLAGGED: injection patterns detected]` : text
       },
     }),
-    "plunger-config": tool({
-      description: "View or modify Plunger whitelist (domains skipped from <untrusted> wrapper) and blacklist (blocked domains + injection patterns).",
+    "sump-config": tool({
+      description: "View or modify Sump whitelist (domains skipped from <untrusted> wrapper) and blacklist (blocked domains + injection patterns).",
       args: {
         action: tool.schema.enum(["show", "whitelist-add", "whitelist-remove", "blacklist-add", "blacklist-remove", "pattern-add", "pattern-remove"]),
         value: tool.schema.string({ description: "Domain or pattern to add/remove" }).optional(),
       },
       async execute(args) {
-        const wl = join(CFG, "plunger-whitelist.json")
-        const bl = join(CFG, "plunger-blacklist.json")
+        const wl = join(CFG, "sump-whitelist.json")
+        const bl = join(CFG, "sump-blacklist.json")
         const a = args.action as string
 
         if (a === "show") {
