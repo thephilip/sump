@@ -4,10 +4,10 @@ set -e
 CFG="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
 REPO="${SUMP_REPO:-thephilip/sump}"
 mkdir -p "${CFG}/plugins" "${CFG}/commands"
-curl -fsSL "https://raw.githubusercontent.com/$REPO/main/sump.ts" -o "${CFG}/plugins/sump.ts"
-curl -fsSL "https://raw.githubusercontent.com/$REPO/main/commands/sump.md" -o "${CFG}/commands/sump.md"
+curl -fsSL "https://raw.githubusercontent.com/$REPO/master/sump.ts" -o "${CFG}/plugins/sump.ts"
+curl -fsSL "https://raw.githubusercontent.com/$REPO/master/commands/sump.md" -o "${CFG}/commands/sump.md"
 [ -f "${CFG}/sump-blacklist.json" ] || {
-  curl -fsSL "https://raw.githubusercontent.com/$REPO/main/sump-blacklist.json" -o "${CFG}/sump-blacklist.json"
+  curl -fsSL "https://raw.githubusercontent.com/$REPO/master/sump-blacklist.json" -o "${CFG}/sump-blacklist.json"
   echo "  created ${CFG}/sump-blacklist.json (seed)"
 }
 [ -f "${CFG}/sump-whitelist.json" ] || {

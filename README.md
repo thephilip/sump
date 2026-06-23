@@ -21,7 +21,7 @@ In the age of agentic AI, every search result is a potential attack vector. Sump
 ### OpenCode plugin
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/thephilip/sump/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/thephilip/sump/master/install.sh | sh
 ```
 
 Or from a local clone:
