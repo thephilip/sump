@@ -81,7 +81,11 @@ Requires `tsx` (`npm install -g tsx`) or `tsc` to pre-compile.
 
 ## How it works
 
-Sump is available as an [OpenCode](https://opencode.ai) plugin (`sump.ts`, 111 lines) or a standard MCP server (`sump-mcp.ts`, 92 lines) for Claude Code, Codex CLI, Gemini CLI, and any MCP-compatible host. All variants share the same sanitization logic and config files. On every search:
+Sump is available as an [OpenCode](https://opencode.ai) plugin (`sump.ts`, 111 lines) or a standard MCP server (`sump-mcp.ts`, 92 lines) for Claude Code, Codex CLI, Gemini CLI, and any MCP-compatible host. All variants share the same sanitization logic and config files.
+
+**One important difference:** The OpenCode plugin *replaces* the built-in `websearch` — every search is automatically sanitized. The MCP server adds `sump-search` as an extra tool alongside the host's existing search, so the model *can* still call the unguarded version. The tool description nudges it toward the safe one, but that's a recommendation, not enforcement.
+
+On every search:
 
 1. Fetches results from **DuckDuckGo Lite** (no API key needed; override via `SUMP_SEARCH_URL`)
 2. **Checks the source domain** against blacklist → drops if blocked
