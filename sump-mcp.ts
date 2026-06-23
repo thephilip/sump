@@ -75,7 +75,7 @@ async function search(id: any, query: string) {
   try {
     const res = await fetch(`${SEARCH}?q=${encodeURIComponent(query)}`, { headers: { "User-Agent": "sump-mcp/1.0" } })
     if (!res.ok) {
-      respond(id, { content: [{ type: "text", text: `Search failed (${res.status})` }] })
+      respond(id, { isError: true, content: [{ type: "text", text: `Search failed (${res.status})` }] })
       return
     }
     const [text, flagged] = clean(await res.text(), new URL(SEARCH).hostname)
