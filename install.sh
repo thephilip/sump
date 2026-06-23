@@ -26,59 +26,19 @@ curl -fsSL "https://raw.githubusercontent.com/$REPO/master/commands/sump.md" -o 
 
 echo ""
 echo "sump installed: plugin + MCP server + commands + config"
-
-if [ -t 0 ]; then
-  echo ""
-  echo "--- Configure clients ---"
-
-  printf "Set up OpenCode? [Y/n] "
-  read -r ans
-  case "$ans" in
-    [Nn]*) ;;
-    *)
-      mkdir -p ~/.opencode/plugins ~/.opencode/commands
-      ln -sf "${CFG}/plugins/sump.ts" ~/.opencode/plugins/sump.ts
-      ln -sf "${CFG}/commands/sump.md" ~/.opencode/commands/sump.md
-      echo "  OpenCode ready"
-      ;;
-  esac
-
-  printf "Set up Claude Code? [y/N] "
-  read -r ans
-  case "$ans" in
-    [Yy]*)
-      echo ""
-      echo "  Add this to ~/.claude/settings.json or .mcp.json:"
-      echo "  { \"mcpServers\": { \"sump\": { \"command\": \"npx\", \"args\": [\"tsx\", \"${MCP}\"] } } }"
-      echo ""
-      ;;
-  esac
-
-  printf "Set up Codex CLI? [y/N] "
-  read -r ans
-  case "$ans" in
-    [Yy]*)
-      echo ""
-      echo "  Run: codex mcp add sump -- npx tsx ${MCP}"
-      echo ""
-      ;;
-  esac
-
-  printf "Set up Gemini CLI? [y/N] "
-  read -r ans
-  case "$ans" in
-    [Yy]*)
-      echo ""
-      echo "  Run: gemini mcp add sump -- npx tsx ${MCP}"
-      echo ""
-      ;;
-  esac
-
-  echo "--- Done ---"
-else
-  echo ""
-  echo "Run again interactively to configure clients, or set up manually:"
-  echo "  Claude Code: add MCP server pointing to ${MCP}"
-  echo "  Codex CLI:   codex mcp add sump -- npx tsx ${MCP}"
-  echo "  Gemini CLI:  gemini mcp add sump -- npx tsx ${MCP}"
-fi
+echo ""
+echo "--- Next steps ---"
+echo ""
+echo "OpenCode:"
+echo "  ln -sf ${CFG}/plugins/sump.ts ~/.opencode/plugins/sump.ts"
+echo "  ln -sf ${CFG}/commands/sump.md ~/.opencode/commands/sump.md"
+echo ""
+echo "Claude Code:"
+echo "  Add to ~/.claude/settings.json or .mcp.json:"
+echo "  { \"mcpServers\": { \"sump\": { \"command\": \"npx\", \"args\": [\"tsx\", \"${MCP}\"] } } }"
+echo ""
+echo "Codex CLI:"
+echo "  codex mcp add sump -- npx tsx ${MCP}"
+echo ""
+echo "Gemini CLI:"
+echo "  gemini mcp add sump -- npx tsx ${MCP}"
