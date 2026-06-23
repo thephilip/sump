@@ -2,7 +2,7 @@
 
 ![Sump](sump.png)
 
-**Prompt injection guard for OpenCode and Claude Code.** Sump overrides `websearch` (OpenCode) or runs as an MCP server (Claude Code) to sanitize web results before they reach the LLM — stripping invisible Unicode, flagging known injection patterns, and wrapping untrusted content in `<untrusted>` tags. Domain trust tiers let you decide what the model can read freely.
+**Prompt injection guard for OpenCode, Claude Code, Codex CLI, and Gemini CLI.** Sump overrides `websearch` (OpenCode) or runs as an MCP server (Claude Code / Codex CLI / Gemini CLI) to sanitize web results before they reach the LLM — stripping invisible Unicode, flagging known injection patterns, and wrapping untrusted content in `<untrusted>` tags. Domain trust tiers let you decide what the model can read freely.
 
 In the age of agentic AI, every search result is a potential attack vector. Sump is the air gap.
 
@@ -31,9 +31,11 @@ ln -sf $(pwd)/sump.ts ~/.opencode/plugins/
 ln -sf $(pwd)/commands/sump.md ~/.opencode/commands/
 ```
 
-### Claude Code MCP server
+### MCP server (Claude Code / Codex CLI / Gemini CLI)
 
-Add to `~/.claude/settings.json` or project `.mcp.json`:
+The same `sump-mcp.ts` server works with any MCP-compatible tool.
+
+**Claude Code** — add to `~/.claude/settings.json` or project `.mcp.json`:
 
 ```json
 {
@@ -46,11 +48,40 @@ Add to `~/.claude/settings.json` or project `.mcp.json`:
 }
 ```
 
-Requires `tsx` (`npm install -g tsx`) or `tsc` to compile.
+**Codex CLI** — add via command or `~/.codex/config.toml`:
+
+```sh
+codex mcp add sump -- npx tsx /path/to/sump-mcp.ts
+```
+
+```toml
+[mcp_servers.sump]
+command = "npx"
+args = ["tsx", "/path/to/sump-mcp.ts"]
+```
+
+**Gemini CLI** — add via command or `~/.gemini/settings.json`:
+
+```sh
+gemini mcp add sump -- npx tsx /path/to/sump-mcp.ts
+```
+
+```json
+{
+  "mcpServers": {
+    "sump": {
+      "command": "npx",
+      "args": ["tsx", "/path/to/sump-mcp.ts"]
+    }
+  }
+}
+```
+
+Requires `tsx` (`npm install -g tsx`) or `tsc` to pre-compile.
 
 ## How it works
 
-Sump is available as an [OpenCode](https://opencode.ai) plugin (`sump.ts`, 111 lines) or a [Claude Code](https://claude.ai) MCP server (`sump-mcp.ts`, 92 lines). Both share the same sanitization logic and config files. On every search:
+Sump is available as an [OpenCode](https://opencode.ai) plugin (`sump.ts`, 111 lines) or a standard MCP server (`sump-mcp.ts`, 92 lines) for Claude Code, Codex CLI, Gemini CLI, and any MCP-compatible host. All variants share the same sanitization logic and config files. On every search:
 
 1. Fetches results from **DuckDuckGo Lite** (no API key needed; override via `SUMP_SEARCH_URL`)
 2. **Checks the source domain** against blacklist → drops if blocked
@@ -101,11 +132,11 @@ Use natural language in OpenCode:
 
 **Custom search backend** — point `SUMP_SEARCH_URL` at any endpoint that returns text. For an HTML page, the raw text is scanned (Unicode stripping + regex). PRs welcome for proper per-result HTML parsing.
 
-**Plugin bundling** — Sump's single-file design makes it easy to fork or vendor into your own plugin configuration.
+**Plugin bundling** — Sump's minimal footprint makes it easy to fork or vendor into your own plugin configuration.
 
 ## Limits
 
-Sump guards web search results only (OpenCode `websearch` / Claude Code `sump-search` tool). It does **not** protect against:
+Sump guards web search results only (OpenCode `websearch` / MCP `sump-search` tool). It does **not** protect against:
 - Tool-based exfiltration (the model POSTing data to an attacker's server)
 - Prompt injection via `webfetch` or file reads (separate override, not yet implemented for OpenCode)
 - Social engineering of the operator
@@ -113,4 +144,4 @@ Sump guards web search results only (OpenCode `websearch` / Claude Code `sump-se
 
 ## Philosophy
 
-Sump is built in the laziest effective defense tradition. One file, no dependencies, no framework, no build step. Deliberate shortcuts are marked with `ponytail:` comments. The simplicity means you can read, audit, and trust the whole thing in five minutes.
+Sump is built small — no dependencies, no framework, no build step. Deliberate shortcuts are marked with `ponytail:` comments. The simplicity means you can read, audit, and trust the whole thing in five minutes.
