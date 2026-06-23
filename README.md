@@ -1,5 +1,7 @@
 # Sump
 
+![Sump](sump.png)
+
 **Prompt injection guard for OpenCode.** Sump overrides OpenCode's `websearch` to sanitize web results before they reach the LLM — stripping invisible Unicode, flagging known injection patterns, and wrapping untrusted content in `<untrusted>` tags. Domain trust tiers let you decide what the model can read freely.
 
 In the age of agentic AI, every search result is a potential attack vector. Sump is the air gap.
