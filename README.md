@@ -18,13 +18,13 @@ In the age of agentic AI, every search result is a potential attack vector. Sump
 
 ## Install
 
-### OpenCode plugin
-
 ```sh
 curl -fsSL https://raw.githubusercontent.com/thephilip/sump/master/install.sh | sh
 ```
 
-Or from a local clone:
+### OpenCode
+
+From a local clone:
 
 ```sh
 ln -sf $(pwd)/sump.ts ~/.opencode/plugins/
