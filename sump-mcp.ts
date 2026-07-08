@@ -31,6 +31,25 @@ function clean(text: string, domain: string): [string, boolean] {
   return [c, flagged]
 }
 
+interface Result { title: string; snippet: string; url: string; domain: string }
+
+function parseResults(html: string): Result[] {
+  const results: Result[] = []
+  const linkRx = /<a rel="nofollow" href="[^"]*uddg=([^&"]+)[^"]*"[^>]*class='result-link'>([^<]+)<\/a>/g
+  const snippetRx = /<td class='result-snippet'>\s*([\s\S]*?)\s*<\/td>/g
+  const links = [...html.matchAll(linkRx)]
+  const snippets = [...html.matchAll(snippetRx)]
+  for (let i = 0; i < links.length; i++) {
+    const url = decodeURIComponent(links[i][1])
+    const title = links[i][2].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#x27;/g, "'").replace(/&quot;/g, '"')
+    const snippet = (snippets[i]?.[1] || "").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#x27;/g, "'").replace(/&quot;/g, '"').trim()
+    let domain = ""
+    try { domain = new URL(url).hostname } catch {}
+    results.push({ title, snippet, url, domain })
+  }
+  return results
+}
+
 // ponytail: no MCP SDK — newline-delimited JSON-RPC over stdio
 import { createInterface } from "readline"
 const rl = createInterface({ input: process.stdin })
@@ -73,10 +92,20 @@ async function search(id: any, query: string) {
       respond(id, { isError: true, content: [{ type: "text", text: `Search failed (${res.status})` }] })
       return
     }
-    const [text, flagged] = clean(await res.text(), new URL(SEARCH).hostname)
-    respond(id, {
-      content: [{ type: "text", text: flagged ? `${text}\n\n[FLAGGED: injection patterns detected]` : text }],
-    })
+    const parsed = parseResults(await res.text())
+    let anyFlagged = false
+    const lines: string[] = []
+    let n = 0
+    for (const r of parsed) {
+      const [snippet, flagged] = clean(r.snippet, r.domain)
+      if (!snippet) continue
+      anyFlagged ||= flagged
+      n++
+      const entry = `${n}. ${r.title}\n${snippet}\n${r.url}`
+      lines.push(flagged ? `${entry}\n[FLAGGED: injection patterns detected]` : entry)
+    }
+    const text = lines.join("\n\n") || "No results."
+    respond(id, { content: [{ type: "text", text }] })
   } catch (e: any) {
     respond(id, { isError: true, content: [{ type: "text", text: `Search error: ${e.message}` }] })
   }

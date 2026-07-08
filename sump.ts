@@ -24,13 +24,31 @@ const BLACKLIST: string[] = (() => {
   catch { return [] }
 })()
 
-// ponytail: no per-result HTML parsing, whole-blob sanitize. Add structured parse if domain-level trust per result needed.
 function clean(text: string, domain: string): [string, boolean] {
   if (!domain || BLACKLIST.some(d => domain.includes(d))) return ["", true]
-  let c = text.replace(/[\u{E0000}-\u{E007F}]/gu, "")  // ponytail: invisible unicode only, add markdown image/reflink strip if webfetch override added
+  let c = text.replace(/[\u{E0000}-\u{E007F}]/gu, "")
   const flagged = BAD_RX.some(r => r.test(c))
   if (!WHITELIST.some(w => domain.includes(w))) c = `<untrusted>\n${c}\n</untrusted>`
   return [c, flagged]
+}
+
+interface Result { title: string; snippet: string; url: string; domain: string }
+
+function parseResults(html: string): Result[] {
+  const results: Result[] = []
+  const linkRx = /<a rel="nofollow" href="[^"]*uddg=([^&"]+)[^"]*"[^>]*class='result-link'>([^<]+)<\/a>/g
+  const snippetRx = /<td class='result-snippet'>\s*([\s\S]*?)\s*<\/td>/g
+  const links = [...html.matchAll(linkRx)]
+  const snippets = [...html.matchAll(snippetRx)]
+  for (let i = 0; i < links.length; i++) {
+    const url = decodeURIComponent(links[i][1])
+    const title = links[i][2].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#x27;/g, "'").replace(/&quot;/g, '"')
+    const snippet = (snippets[i]?.[1] || "").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#x27;/g, "'").replace(/&quot;/g, '"').trim()
+    let domain = ""
+    try { domain = new URL(url).hostname } catch {}
+    results.push({ title, snippet, url, domain })
+  }
+  return results
 }
 
 function readJSON(path: string) {
@@ -46,8 +64,17 @@ export const Sump: Plugin = async () => ({
       async execute(args) {
         const res = await fetch(`${SEARCH}?q=${encodeURIComponent(args.query as string)}`, { headers: { "User-Agent": "sump/1.0" } })
         if (!res.ok) return `Search failed (${res.status})`
-        const [text, flagged] = clean(await res.text(), new URL(SEARCH).hostname)
-        return flagged ? `${text}\n\n[FLAGGED: injection patterns detected]` : text
+        const parsed = parseResults(await res.text())
+        const lines: string[] = []
+        let n = 0
+        for (const r of parsed) {
+          const [snippet, flagged] = clean(r.snippet, r.domain)
+          if (!snippet) continue
+          n++
+          const entry = `${n}. ${r.title}\n${snippet}\n${r.url}`
+          lines.push(flagged ? `${entry}\n[FLAGGED: injection patterns detected]` : entry)
+        }
+        return lines.join("\n\n") || "No results."
       },
     }),
     "sump-config": tool({
