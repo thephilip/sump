@@ -2,7 +2,8 @@
 set -e
 CFG="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
 REPO="${SUMP_REPO:-thephilip/sump}"
-MCP="${CFG}/plugins/sump-mcp.ts"
+MCP_TS="${CFG}/plugins/sump-mcp.ts"
+MCP_MJS="${CFG}/plugins/sump-mcp.mjs"
 
 mkdir -p "${CFG}/plugins" "${CFG}/commands"
 
@@ -10,7 +11,14 @@ echo "==> Downloading sump.ts (OpenCode plugin)..."
 curl -fsSL "https://raw.githubusercontent.com/$REPO/master/sump.ts" -o "${CFG}/plugins/sump.ts"
 
 echo "==> Downloading sump-mcp.ts (MCP server)..."
-curl -fsSL "https://raw.githubusercontent.com/$REPO/master/sump-mcp.ts" -o "${MCP}"
+curl -fsSL "https://raw.githubusercontent.com/$REPO/master/sump-mcp.ts" -o "${MCP_TS}"
+
+echo "==> Building sump-mcp.mjs..."
+if npx esbuild "${MCP_TS}" --bundle --platform=node --format=esm --outfile="${MCP_MJS}" 2>/dev/null; then
+  echo "  built ${MCP_MJS}"
+else
+  echo "  esbuild not available — use 'npx tsx ${MCP_TS}' instead of node"
+fi
 
 echo "==> Installing command..."
 curl -fsSL "https://raw.githubusercontent.com/$REPO/master/commands/sump.md" -o "${CFG}/commands/sump.md"
@@ -24,6 +32,8 @@ curl -fsSL "https://raw.githubusercontent.com/$REPO/master/commands/sump.md" -o 
   echo "  created ${CFG}/sump-whitelist.json (empty)"
 }
 
+NODE="$(which node 2>/dev/null || echo node)"
+
 echo ""
 echo "sump installed: plugin + MCP server + commands + config"
 echo ""
@@ -33,12 +43,11 @@ echo "OpenCode:"
 echo "  ln -sf ${CFG}/plugins/sump.ts ~/.opencode/plugins/sump.ts"
 echo "  ln -sf ${CFG}/commands/sump.md ~/.opencode/commands/sump.md"
 echo ""
-echo "Claude Code:"
-echo "  Add to ~/.claude/settings.json or .mcp.json:"
-echo "  { \"mcpServers\": { \"sump\": { \"command\": \"npx\", \"args\": [\"tsx\", \"${MCP}\"] } } }"
+echo "Claude Code (add to ~/.claude.json):"
+echo "  { \"mcpServers\": { \"sump\": { \"command\": \"${NODE}\", \"args\": [\"${MCP_MJS}\"] } } }"
 echo ""
 echo "Codex CLI:"
-echo "  codex mcp add sump -- npx tsx ${MCP}"
+echo "  codex mcp add sump -- ${NODE} ${MCP_MJS}"
 echo ""
 echo "Gemini CLI:"
-echo "  gemini mcp add sump -- npx tsx ${MCP}"
+echo "  gemini mcp add sump -- ${NODE} ${MCP_MJS}"

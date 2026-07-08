@@ -33,16 +33,16 @@ ln -sf $(pwd)/commands/sump.md ~/.opencode/commands/
 
 ### MCP server (Claude Code / Codex CLI / Gemini CLI)
 
-The same `sump-mcp.ts` server works with any MCP-compatible tool.
+The installer builds `sump-mcp.mjs` from the TypeScript source via esbuild. The built file runs with plain `node` — no `tsx` dependency needed at runtime.
 
-**Claude Code** — add to `~/.claude/settings.json` or project `.mcp.json`:
+**Claude Code** — add to `~/.claude.json`:
 
 ```json
 {
   "mcpServers": {
     "sump": {
-      "command": "npx",
-      "args": ["tsx", "/path/to/sump-mcp.ts"]
+      "command": "node",
+      "args": ["/path/to/sump-mcp.mjs"]
     }
   }
 }
@@ -51,37 +51,37 @@ The same `sump-mcp.ts` server works with any MCP-compatible tool.
 **Codex CLI** — add via command or `~/.codex/config.toml`:
 
 ```sh
-codex mcp add sump -- npx tsx /path/to/sump-mcp.ts
+codex mcp add sump -- node /path/to/sump-mcp.mjs
 ```
 
 ```toml
 [mcp_servers.sump]
-command = "npx"
-args = ["tsx", "/path/to/sump-mcp.ts"]
+command = "node"
+args = ["/path/to/sump-mcp.mjs"]
 ```
 
 **Gemini CLI** — add via command or `~/.gemini/settings.json`:
 
 ```sh
-gemini mcp add sump -- npx tsx /path/to/sump-mcp.ts
+gemini mcp add sump -- node /path/to/sump-mcp.mjs
 ```
 
 ```json
 {
   "mcpServers": {
     "sump": {
-      "command": "npx",
-      "args": ["tsx", "/path/to/sump-mcp.ts"]
+      "command": "node",
+      "args": ["/path/to/sump-mcp.mjs"]
     }
   }
 }
 ```
 
-Requires `tsx` (`npm install -g tsx`) or `tsc` to pre-compile.
+Alternatively, skip the build and run the `.ts` source directly with `npx tsx /path/to/sump-mcp.ts`.
 
 ## How it works
 
-Sump is available as an [OpenCode](https://opencode.ai) plugin (`sump.ts`, 111 lines) or a standard MCP server (`sump-mcp.ts`, 92 lines) for Claude Code, Codex CLI, Gemini CLI, and any MCP-compatible host. All variants share the same sanitization logic and config files.
+Sump is available as an [OpenCode](https://opencode.ai) plugin (`sump.ts`) or a standard MCP server (`sump-mcp.ts`) for Claude Code, Codex CLI, Gemini CLI, and any MCP-compatible host. All variants share the same sanitization logic and config files.
 
 **One important difference:** The OpenCode plugin *replaces* the built-in `websearch` — every search is automatically sanitized. The MCP server adds `sump-search` as an extra tool alongside the host's existing search, so the model *can* still call the unguarded version. The tool description nudges it toward the safe one, but that's a recommendation, not enforcement.
 

@@ -1,4 +1,3 @@
-import { createInterface } from "readline"
 import { readFileSync } from "fs"
 import { homedir } from "os"
 import { join } from "path"
@@ -32,22 +31,18 @@ function clean(text: string, domain: string): [string, boolean] {
   return [c, flagged]
 }
 
+// ponytail: no MCP SDK — newline-delimited JSON-RPC over stdio
+import { createInterface } from "readline"
 const rl = createInterface({ input: process.stdin })
-
-// ponytail: no MCP SDK — JSON-RPC over stdio is ~40 lines for 3 message types
-rl.on("line", (line) => {
-  line = line.trim()
-  if (!line) return
-  try {
-    const msg = JSON.parse(line)
-    handle(msg)
-  } catch { /* malformed JSON, skip */ }
+rl.on("line", (line: string) => {
+  if (!line.trim()) return
+  try { handle(JSON.parse(line)) } catch { /* malformed JSON, skip */ }
 })
 
 function handle(msg: any) {
   const { id, method, params } = msg
   if (method === "initialize") {
-    respond(id, { protocolVersion: "2025-03-26", capabilities: { tools: {} } })
+    respond(id, { protocolVersion: params?.protocolVersion || "2024-11-05", capabilities: { tools: {} }, serverInfo: { name: "sump", version: "1.0.0" } })
   } else if (!id) {
     // ponytail: notifications (e.g. initialized, cancelled) are ignored
   } else if (method === "tools/list") {
