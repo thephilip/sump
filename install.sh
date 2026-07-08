@@ -1,14 +1,15 @@
 #!/bin/sh
 set -e
-CFG="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
+CFG="${XDG_CONFIG_HOME:-$HOME/.config}/sump"
+OC="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
 REPO="${SUMP_REPO:-thephilip/sump}"
-MCP_TS="${CFG}/plugins/sump-mcp.ts"
-MCP_MJS="${CFG}/plugins/sump-mcp.mjs"
+MCP_TS="${CFG}/sump-mcp.ts"
+MCP_MJS="${CFG}/sump-mcp.mjs"
 
-mkdir -p "${CFG}/plugins" "${CFG}/commands"
+mkdir -p "${CFG}" "${OC}/plugins" "${OC}/commands"
 
 echo "==> Downloading sump.ts (OpenCode plugin)..."
-curl -fsSL "https://raw.githubusercontent.com/$REPO/master/sump.ts" -o "${CFG}/plugins/sump.ts"
+curl -fsSL "https://raw.githubusercontent.com/$REPO/master/sump.ts" -o "${OC}/plugins/sump.ts"
 
 echo "==> Downloading sump-mcp.ts (MCP server)..."
 curl -fsSL "https://raw.githubusercontent.com/$REPO/master/sump-mcp.ts" -o "${MCP_TS}"
@@ -21,7 +22,7 @@ else
 fi
 
 echo "==> Installing command..."
-curl -fsSL "https://raw.githubusercontent.com/$REPO/master/commands/sump.md" -o "${CFG}/commands/sump.md"
+curl -fsSL "https://raw.githubusercontent.com/$REPO/master/commands/sump.md" -o "${OC}/commands/sump.md"
 
 [ -f "${CFG}/sump-blacklist.json" ] || {
   curl -fsSL "https://raw.githubusercontent.com/$REPO/master/sump-blacklist.json" -o "${CFG}/sump-blacklist.json"
@@ -40,8 +41,8 @@ echo ""
 echo "--- Next steps ---"
 echo ""
 echo "OpenCode:"
-echo "  ln -sf ${CFG}/plugins/sump.ts ~/.opencode/plugins/sump.ts"
-echo "  ln -sf ${CFG}/commands/sump.md ~/.opencode/commands/sump.md"
+echo "  ln -sf ${OC}/plugins/sump.ts ~/.opencode/plugins/sump.ts"
+echo "  ln -sf ${OC}/commands/sump.md ~/.opencode/commands/sump.md"
 echo ""
 echo "Claude Code (add to ~/.claude.json):"
 echo "  { \"mcpServers\": { \"sump\": { \"command\": \"${NODE}\", \"args\": [\"${MCP_MJS}\"] } } }"

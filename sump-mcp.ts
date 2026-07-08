@@ -2,7 +2,7 @@ import { readFileSync } from "fs"
 import { homedir } from "os"
 import { join } from "path"
 
-const CFG = join(homedir(), ".config", "opencode")
+const CFG = join(homedir(), ".config", "sump")
 const SEARCH = process.env.SUMP_SEARCH_URL || "https://lite.duckduckgo.com/lite/"
 
 // ponytail: cloned from sump.ts — YAGNI shared module for two consumers

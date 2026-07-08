@@ -99,14 +99,14 @@ The `/sump` command and `sump-config` tool let you manage trust rules at runtime
 
 ### Whitelist — domains trusted to skip `<untrusted>`
 
-`~/.config/opencode/sump-whitelist.json`:
+`~/.config/sump/sump-whitelist.json`:
 ```json
 ["docs.mycompany.com", "confluence.internal", "github.com/your-org"]
 ```
 
 ### Blacklist — blocked domains + injection patterns
 
-`~/.config/opencode/sump-blacklist.json`:
+`~/.config/sump/sump-blacklist.json`:
 ```json
 {
   "domains": ["pastebin.com"],
@@ -132,7 +132,7 @@ Use natural language in OpenCode:
 
 ## Extending
 
-**Add patterns** — edit `~/.config/opencode/sump-blacklist.json` patterns array, or use the `pattern-add` action via `/sump`. Patterns are case-insensitive regexes.
+**Add patterns** — edit `~/.config/sump/sump-blacklist.json` patterns array, or use the `pattern-add` action via `/sump`. Patterns are case-insensitive regexes.
 
 **Custom search backend** — point `SUMP_SEARCH_URL` at any endpoint that returns text. For an HTML page, the raw text is scanned (Unicode stripping + regex). PRs welcome for proper per-result HTML parsing.
 
