@@ -6,23 +6,15 @@ import { join } from "path"
 const CFG = join(homedir(), ".config", "sump")
 const SEARCH = process.env.SUMP_SEARCH_URL || "https://lite.duckduckgo.com/lite/"
 
+function readJSON(path: string) {
+  try { return JSON.parse(readFileSync(path, "utf-8")) }
+  catch { return null }
+}
+
 // ponytail: naive regex scan, upgrade to intent classifier if false positives hurt
-const BAD_RX = (() => {
-  try {
-    const f = join(CFG, "sump-blacklist.json")
-    return (JSON.parse(readFileSync(f, "utf-8")).patterns || []).map((p: string) => new RegExp(p, "i"))
-  } catch { return [] }
-})()
-
-const WHITELIST: string[] = (() => {
-  try { return JSON.parse(readFileSync(join(CFG, "sump-whitelist.json"), "utf-8")) }
-  catch { return [] }
-})()
-
-const BLACKLIST: string[] = (() => {
-  try { return JSON.parse(readFileSync(join(CFG, "sump-blacklist.json"), "utf-8")).domains || [] }
-  catch { return [] }
-})()
+const BAD_RX = ((readJSON(join(CFG, "sump-blacklist.json"))?.patterns || []) as string[]).map(p => new RegExp(p, "i"))
+const WHITELIST: string[] = readJSON(join(CFG, "sump-whitelist.json")) ?? []
+const BLACKLIST: string[] = readJSON(join(CFG, "sump-blacklist.json"))?.domains ?? []
 
 function clean(text: string, domain: string): [string, boolean] {
   if (!domain || BLACKLIST.some(d => domain.includes(d))) return ["", true]
@@ -34,6 +26,16 @@ function clean(text: string, domain: string): [string, boolean] {
 
 interface Result { title: string; snippet: string; url: string; domain: string }
 
+const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", "#x27": "'" }
+function decodeEntities(s: string): string {
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|\w+);/g, (m, e) => {
+    if (ENTITIES[e]) return ENTITIES[e]
+    if (e.startsWith("#x")) return String.fromCodePoint(parseInt(e.slice(2), 16))
+    if (e.startsWith("#")) return String.fromCodePoint(parseInt(e.slice(1), 10))
+    return m
+  })
+}
+
 function parseResults(html: string): Result[] {
   const results: Result[] = []
   const linkRx = /<a rel="nofollow" href="[^"]*uddg=([^&"]+)[^"]*"[^>]*class='result-link'>([^<]+)<\/a>/g
@@ -42,18 +44,13 @@ function parseResults(html: string): Result[] {
   const snippets = [...html.matchAll(snippetRx)]
   for (let i = 0; i < links.length; i++) {
     const url = decodeURIComponent(links[i][1])
-    const title = links[i][2].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#x27;/g, "'").replace(/&quot;/g, '"')
-    const snippet = (snippets[i]?.[1] || "").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#x27;/g, "'").replace(/&quot;/g, '"').trim()
+    const title = decodeEntities(links[i][2])
+    const snippet = decodeEntities((snippets[i]?.[1] || "").replace(/<[^>]+>/g, "")).trim()
     let domain = ""
     try { domain = new URL(url).hostname } catch {}
     results.push({ title, snippet, url, domain })
   }
   return results
-}
-
-function readJSON(path: string) {
-  try { return JSON.parse(readFileSync(path, "utf-8")) }
-  catch { return null }
 }
 
 export const Sump: Plugin = async () => ({
@@ -68,10 +65,12 @@ export const Sump: Plugin = async () => ({
         const lines: string[] = []
         let n = 0
         for (const r of parsed) {
-          const [snippet, flagged] = clean(r.snippet, r.domain)
+          const [title, tFlag] = clean(r.title, r.domain)
+          const [snippet, sFlag] = clean(r.snippet, r.domain)
           if (!snippet) continue
+          const flagged = tFlag || sFlag
           n++
-          const entry = `${n}. ${r.title}\n${snippet}\n${r.url}`
+          const entry = `${n}. ${title}\n${snippet}\n${r.url}`
           lines.push(flagged ? `${entry}\n[FLAGGED: injection patterns detected]` : entry)
         }
         return lines.join("\n\n") || "No results."

@@ -33,6 +33,16 @@ function clean(text: string, domain: string): [string, boolean] {
 
 interface Result { title: string; snippet: string; url: string; domain: string }
 
+const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", "#x27": "'" }
+function decodeEntities(s: string): string {
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|\w+);/g, (m, e) => {
+    if (ENTITIES[e]) return ENTITIES[e]
+    if (e.startsWith("#x")) return String.fromCodePoint(parseInt(e.slice(2), 16))
+    if (e.startsWith("#")) return String.fromCodePoint(parseInt(e.slice(1), 10))
+    return m
+  })
+}
+
 function parseResults(html: string): Result[] {
   const results: Result[] = []
   const linkRx = /<a rel="nofollow" href="[^"]*uddg=([^&"]+)[^"]*"[^>]*class='result-link'>([^<]+)<\/a>/g
@@ -41,8 +51,8 @@ function parseResults(html: string): Result[] {
   const snippets = [...html.matchAll(snippetRx)]
   for (let i = 0; i < links.length; i++) {
     const url = decodeURIComponent(links[i][1])
-    const title = links[i][2].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#x27;/g, "'").replace(/&quot;/g, '"')
-    const snippet = (snippets[i]?.[1] || "").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#x27;/g, "'").replace(/&quot;/g, '"').trim()
+    const title = decodeEntities(links[i][2])
+    const snippet = decodeEntities((snippets[i]?.[1] || "").replace(/<[^>]+>/g, "")).trim()
     let domain = ""
     try { domain = new URL(url).hostname } catch {}
     results.push({ title, snippet, url, domain })
@@ -62,6 +72,8 @@ function handle(msg: any) {
   const { id, method, params } = msg
   if (method === "initialize") {
     respond(id, { protocolVersion: params?.protocolVersion || "2024-11-05", capabilities: { tools: {} }, serverInfo: { name: "sump", version: "1.0.0" } })
+  } else if (method === "ping") {
+    respond(id, {})
   } else if (!id) {
     // ponytail: notifications (e.g. initialized, cancelled) are ignored
   } else if (method === "tools/list") {
@@ -93,15 +105,15 @@ async function search(id: any, query: string) {
       return
     }
     const parsed = parseResults(await res.text())
-    let anyFlagged = false
     const lines: string[] = []
     let n = 0
     for (const r of parsed) {
-      const [snippet, flagged] = clean(r.snippet, r.domain)
+      const [title, tFlag] = clean(r.title, r.domain)
+      const [snippet, sFlag] = clean(r.snippet, r.domain)
       if (!snippet) continue
-      anyFlagged ||= flagged
+      const flagged = tFlag || sFlag
       n++
-      const entry = `${n}. ${r.title}\n${snippet}\n${r.url}`
+      const entry = `${n}. ${title}\n${snippet}\n${r.url}`
       lines.push(flagged ? `${entry}\n[FLAGGED: injection patterns detected]` : entry)
     }
     const text = lines.join("\n\n") || "No results."
